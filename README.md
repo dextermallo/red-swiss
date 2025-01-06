@@ -23,7 +23,7 @@ Here is a quick demo for shipping multiple files at a time:
 
 https://github.com/user-attachments/assets/895d3a44-56a9-437e-99b2-85262815b2ff
 
-> ![TIPS]
+> [!TIP]
 > It is powerful when you have a set of frequently used tools. For example:
 > ```bash
 > # under /script/extension.sh
@@ -46,8 +46,8 @@ curl http://$ip:8080
 See:
 ![command-session](./demo/command-session.gif)
 
-> ![TIPS]
-> "sticky session" is configurable. see [3.1.1. About Globbal Settings](#3-1-1-about-globbal-settings)
+> [!TIP]
+> `sticky session` is configurable. see [3.1.1. About Globbal Settings](#3-1-1-about-globbal-settings)
 
 There are other commands to help you with the enumeration, exploitation, and post-exploitation. See [3. Usage](#3-usage). You can also customize the settings and add your own scripts and utilities to the Swiss Knife. See [4. Development & Customization](#4-development--customization). 
 
@@ -57,7 +57,7 @@ There are other commands to help you with the enumeration, exploitation, and pos
 >[!NOTE]
 > Tested on `Kali 6.8.11-1kali2 (2024-05-30)`, virtualizing using `UTM 4.4.5` on MacBook Pro (M2, Sonoma 14.5)
 
->[!CAUTION]
+> [!CAUTION]
 > The script is designed to work on Kali Linux. It may not work on other Linux distributions.
 > the scripts are developed and tested under Zsh (v5.9). There might be some issues if you are using Bash. PRs and Issues are welcome!
 
@@ -118,7 +118,7 @@ source ~/.zshrc
 ```
 
 ## 3. Usage
-> ![TIP]
+> [!TIP]
 > To keep the README concise, the following sections only provide a short description and examples. You can find more detailed information by running the command `<command> -h` or read it under the `/script` directory.
 
 ### 3.1. Configurations
@@ -146,7 +146,7 @@ These configurations will parse with a prefix `_swiss` and use across the script
 Under `/settings.json`, there is a `global_settings` attribute.
 
 ### 3.2. Alias
-> ![TIP]
+> [!TIP]
 > alias.sh is a collection of alias commands that are used across the oscp-swiss scripts.
 > The functions under alias.sh are the default commands that are replaced with the custom commands.
 
@@ -159,7 +159,7 @@ hydra -U $wordlist_username_big -p password ssh://10.10.10.10
 ```
 
 ### 3.3. Extension
-> ![CAUTION]
+> [!CAUTION]
 > The extension.sh is for the non-native functions that are used in the script.
 > You may need to download the tools and scripts or modify the path to use them.
 > for extension function, you should use the `_banner extension <extension_name>` function to display the banner
@@ -188,7 +188,7 @@ https://github.com/user-attachments/assets/ee3838a1-a35e-410b-9e35-a9b404b68247
 ![command-listen](./demo/command-listen.gif)
 
 #### 3.4.4. `cheatsheet`: Find Cheatsheet in your terminal.
-> ![TIP]
+> [!TIP]
 > `cheatsheet` is helpful for the things you will frequently-used, such as commands to upgrade to fully-TTy
 
 ![command-cheatsheet](./demo/command-cheatsheet.gif)

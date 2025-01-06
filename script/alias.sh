@@ -46,7 +46,7 @@ fi
 #   - function.wpscan.wpscan_token <string>: WPScan API token
 function custom_wpscan() {
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
-    _wrap \wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_alias_wpscan_token $@
+    _wrap "\wpscan --enumerate ap,at,u --plugins-detection aggressive --api-token $_swiss_alias_wpscan_token $@"
 }
 
 if [[ $_swiss_alias_use_custom_wpscan == true ]]; then

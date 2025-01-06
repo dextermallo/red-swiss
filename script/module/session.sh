@@ -24,7 +24,7 @@ function session() {
             if [[ "$arg_create_workspace" -eq 1 ]]; then
                 [[ -d $arg_session_name ]] && _logger -l error "Duplicated directory under $pwd." && return 1
                 mkdir $arg_session_name && cd $arg_session_name
-                gum confirm "CSetting up common files in workspace? (username.txt, password.txt, reports/)" && arg_setup_workspace=1 || arg_setup_workspace=0
+                gum confirm "Setting up common files in workspace? (username.txt, password.txt, reports/)" && arg_setup_workspace=1 || arg_setup_workspace=0
 
                 if [[ "$arg_setup_workspace" -eq 1 ]]; then
                     if [[ -f "$_swiss_init_workspace_default_username_wordlist" ]]; then
