@@ -27,18 +27,8 @@ function session() {
                 gum confirm "Setting up common files in workspace? (username.txt, password.txt, reports/)" && arg_setup_workspace=1 || arg_setup_workspace=0
 
                 if [[ "$arg_setup_workspace" -eq 1 ]]; then
-                    if [[ -f "$_swiss_init_workspace_default_username_wordlist" ]]; then
-                        cp $_swiss_init_workspace_default_username_wordlist username.txt
-                    else
-                        touch username.txt
-                    fi
-
-                    if [[ -f "$_swiss_init_workspace_default_password_wordlist" ]]; then
-                        cp $_swiss_init_workspace_default_password_wordlist password.txt
-                    else
-                        touch password.txt
-                    fi
-
+                    [[ -f "$_swiss_session_default_username_wordlist" ]] && cp $_swiss_session_default_username_wordlist username.txt || touch username.txt
+                    [[ -f "$_swiss_session_default_password_wordlist" ]] && cp $_swiss_session_default_password_wordlist password.txt || touch password.txt
                     mkdir reports
                 fi
                 workspace_snippet=", \"workspace\": \"$(pwd)"\"
@@ -74,12 +64,13 @@ function session() {
             mkdir $swiss_session
         ;;
         help)
+        _help
         ;;
     esac
 }
 
 function _unset_session() {
-    jq -r 'to_entries[] | "\(.key)=\(.value)"' "$1" | while IFS="=" read -r key value; do unset $key; done
+    [[ ! -z $1 ]] && jq -r 'to_entries[] | "\(.key)=\(.value)"' "$1" | while IFS="=" read -r key value; do unset $key; done
 }
 
 function _set_session() {

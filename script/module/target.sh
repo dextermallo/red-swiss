@@ -65,7 +65,9 @@ function listen_target() {
 
 # Description: lookup an IP address's public information
 # Usage: target_ipinfo <ip>
-# TODO: input validation
+# Example:
+#   target_ipinfo 8.8.8.8
 function target_ipinfo() {
-  curl https://ipinfo.io/$1/json
+    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
+    [[ $(_is_ip $1) -eq 1 ]] && curl https://ipinfo.io/$1/json || _logger error "Input must be a IPv4 address."
 }
