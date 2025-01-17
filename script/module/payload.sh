@@ -20,7 +20,6 @@ function create_payload() {
 }
 
 _ssh_lfi() {
-
     local input="$1"
     local prefix="$2"
     local algos=("id_rsa" "id_dsa" "id_ecdsa" "id_ed25519")

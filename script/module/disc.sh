@@ -36,8 +36,10 @@ function google() {
     googler $@ --count 5 --np -x
 }
 
+# Description: copy a file to the clickboard
+# Usage: copy <FILE>
 function copy() {
-    \cat $1 | xclip -selection clickboard
+    [[ -f $1 ]] && \cat $1 | xclip -selection clickboard || _logger -l error "File not found."
 }
 
 # Description:

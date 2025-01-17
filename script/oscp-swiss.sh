@@ -23,8 +23,8 @@ source $swiss_alias
 source $swiss_extension
 
 for script in "$swiss_module"/*.sh; do
-    local is_enabled=0
-    local module_name=${${script##*/}%.*}
+    is_enabled=0
+    module_name="${script##*/}"
 
     for enable_module in $(echo "$_swiss_used_module" | jq -r '.[]'); do
         [[ "$enable_module" == "$module_name" ]] && is_enabled=1
@@ -89,5 +89,21 @@ function swiss() {
         alias|extension) _parse "$swiss_script/$module.sh" ;;
         bruteforce|crypto|help-exploit|host|machine|payload|prep|recon|target|workspace) _parse "$swiss_script/module/$module.sh" ;;
         *) _logger -l error "Invalid modules. see -h | --help." ;;
+    esac
+}
+
+function wordlist() {
+    arg_option=$(gum choose --header "Looking for wordlists?" "frequent used" "current directory" "wordlist base directory")
+
+    case $arg_option in
+        "frequent used")
+            _wrap ls -l /usr/share/wordlists
+        ;;
+        "current directory")
+            gum file .
+        ;;
+        "wordlist base directory")
+            _wrap ls -l /usr/share/wordlists
+        ;;
     esac
 }

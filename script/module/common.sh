@@ -310,5 +310,5 @@ export swiss_cheatsheet="$swiss_root/doc/cheatsheet"
 function cheatsheet() {
     [[ $1 == "-h" || $1 == "--help" ]] && _help && return 0
     cheatsheet_selection=$(ls $swiss_cheatsheet | sed 's/\.[^.]*$//' | gum choose)
-    cat "$swiss_cheatsheet/$cheatsheet_selection.md"
+    gum pager < "$swiss_cheatsheet/$cheatsheet_selection.md"
 }

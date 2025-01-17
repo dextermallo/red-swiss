@@ -7,67 +7,58 @@
 # Modes: fast (default), tcp, udp, udp-all, stealth
 # Example: recon 192.168.1.1
 function recon() {
-    _rustscan() {
-        local output_path="$(pwd)/reports"
-        local use_udp=""
-        [[ "$mode" == "udp" ]] && use_udp="--udp"
-        mkdir -p $output_path
-        _wrap "rustscan -a $IP $use_udp | tee $output_path/rustscan-$IP"
-    }
+    [[ $1 == "-h" || $1 == "--help" ]] && _help && return 0
+
+    local arg_ip=$(gum input --header="IP address?" --value=$(_get_default_argument "ip"))
+    local arg_tool=$(gum choose --header "Used utilities" "rustscan" "nmap")
+    local report_path="$(pwd)/reports"
 
     check_service_and_vuln() {
         local data_path=$1
         local ports=$(grep -oP '^\d+\/\w+' $data_path | awk -F/ '{print $1}' | tr '\n' ',' | sed 's/,$//')
-        _logger warn "[w] Ports found: $ports."
-        _logger info "[i] Checking service on ports. Saved to $data_path-svc"
-        _wrap nmap -p$ports -sVC $IP -oN $data_path-svc
-        _logger info "[i] Checking with nmap vuln script. Saved to $data_path-vuln"
-        _wrap nmap -p$ports --script vuln $IP -oN $data_path-vuln
+        _logger -l warn "Ports found: $ports."
+        _logger -l info "Checking service on ports. Saved to $data_path-svc"
+        _wrap nmap -p$ports -sVC $arg_ip -oN $data_path-svc
+        _logger -l info "Checking with nmap vuln script. Saved to $data_path-vuln"
+        _wrap nmap -p$ports --script vuln $arg_ip -oN $data_path-vuln
     }
 
-    _nmap() {
-        local saved_file_path="$(pwd)/reports/nmap/$IP"
-        _logger info "[i] Creating directory $saved_file_path ..."
-        mkdir -p $saved_file_path
-
-        case "$mode" in
-            fast)
-                recon -s nmap -m tcp-5000 -i $IP && recon -s nmap -m udp-200 -i $IP
-                _logger -l important -b "Remember to run tcp and udp mode for full enumeration"
-            ;;
-            tcp) _wrap nmap -p0-65535 -v $IP -oN $saved_file_path/tcp-full && check_service_and_vuln $saved_file_path/tcp-full ;;
-            tcp-5000) _wrap nmap -v --top-ports 5000 $IP -oN $saved_file_path/tcp-top-5000 && check_service_and_vuln $saved_file_path/tcp-top-5000 ;;
-            udp-200) _wrap sudo nmap --top-ports 200 -sU -F -v $IP -oN $saved_file_path/udp-top-200 ;;
-            udp-all) _wrap sudo nmap -sU -F -v $IP -oN $saved_file_path/udp_all ;;
-            stealth) _wrap sudo nmap -sS -p0-65535 $IP -Pn -oN $saved_file_path/stealth ;;
-            *) _logger error "[e] Invalid mode '$mode'. Valid modes are: fast, tcp, udp-200, udp-all, stealth." && return 1 ;;
-        esac
-    }
-
-    local IP=""
-    local service="nmap"
-    local mode="tcp"
-
-    [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
-
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            -i|--ip) IP="$2" && shift 2 ;;
-            -s|--service) service="$2" && shift 2 ;;
-            -m|--mode) mode="$2" && shift 2 ;;
-            *) _help && return 0 ;;
-        esac
-    done    
-
-    if [[ ! $(_is_ip $IP) ]]; then
-        _logger error "[e] invalid ip format" && return 1
+    if [[ ! $(_is_ip $arg_ip) ]]; then
+        _logger -l error "invalid ip format" && return 1
     fi
 
-    case "$service" in
-        nmap) _nmap ;;
-        rustscan) _rustscan ;;
+    case "$arg_tool" in
+        nmap) 
+            local saved_file_path="$(pwd)/reports/nmap/$arg_ip"
+            _logger info "[i] Creating directory $saved_file_path ..."
+            mkdir -p $saved_file_path
+            local modes=$(gum choose --header "Mode" --no-limit --selected="tcp-5000","udp-200" "tcp-5000" "udp-200" "tcp" "udp" "stealth" )
+            echo "$modes" | while IFS= read -r mode; do
+                echo "Selected option: $mode"
+                case "$mode" in
+                    tcp) 
+                    local output="$report_path/$arg_ip-nmap-tcp"
+                    _wrap nmap -p0-65535 -v $arg_ip -oN $output && check_service_and_vuln $output ;;
+                    tcp-5000)
+                    local output="$report_path/$arg_ip-nmap-tcp-top-5000"
+                    _wrap nmap -v --top-ports 5000 $arg_ip -oN $output && check_service_and_vuln $output ;;
+                    udp-200)
+                    local output="$report_path/$arg_ip-nmap-udp-top-200"
+                    _wrap sudo nmap --top-ports 200 -sU -F -v $arg_ip -oN $output ;;
+                    udp) 
+                    local output="$report_path/$arg_ip-nmap-udp"
+                    _wrap sudo nmap -sU -F -v $arg_ip -oN $output ;;
+                    stealth)
+                    local output="$report_path/$arg_ip-nmap-stealth"
+                    _wrap sudo nmap -sS -p0-65535 $arg_up -Pn -oN $output ;;
+                    *) _logger -l error "Invalid mode '$mode'. Valid modes: fast, tcp, udp-200, udp-all, stealth." && return 1 ;;
+                esac
+            done            
+        ;;
+        rustscan)
+            _wrap "rustscan -a $arg_ip | tee $report_path/$arg_ip-rustscan"
+        ;;
     esac
-
 }
 
 # Description: directory fuzzing by default. compatible with original arguments
@@ -83,8 +74,8 @@ function recon() {
 #   recon_directory http://example.com/FUZZ -fc 400
 #   recon_directory -m dirsearch http://example.com
 function recon_directory() {
-    _logger debug "[d] Recursive depth: $_swiss_recon_directory_recursive_depth"
-    _logger debug "[d] Wordlist: $_swiss_recon_directory_busting_wordlist"
+    _logger -l debug "Recursive depth: $_swiss_recon_directory_recursive_depth"
+    _logger -l debug "Wordlist: $_swiss_recon_directory_busting_wordlist"
 
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
 
@@ -127,36 +118,36 @@ function recon_file_traversal() {
 }
 
 # Description: subdomain fuzzing using gobuster, compatible with original arguments
-# Usage: recon_subdomain [-h, --help] <DOMAIN_NAME> [OPTIONS]
+# Usage: fuzz_subdomain [-h, --help] <DOMAIN_NAME> [OPTIONS]
 # Arguments:
 #   - DOMAIN_NAME: Domain name. e.g., example.com
 #   - OPTIONS: options from gobuster.
 # Configuration:
-#   - functions.recon_subdomain.wordlist: default wordlist
-# Example: recon_subdomain example.com
-function recon_subdomain() {
+#   - functions.fuzz_subdomain.wordlist: default wordlist
+# Example: fuzz_subdomain example.com
+function fuzz_subdomain() {
     [[ $# -eq 0 || $1 == "-h" || $1 == "--help" ]] && _help && return 0
     local domain_dir=$(_create_web_fuzz_report_directory "$1")
-    _display_wordlist_statistic $_swiss_recon_subdomain_wordlist
-    _wrap gobuster dns -w $_swiss_recon_subdomain_wordlist -t 50 -o $domain_dir/subdomain-recon -d ${@}
+    _display_wordlist_statistic $_swiss_fuzz_subdomain_wordlist
+    _wrap gobuster dns -w $_swiss_fuzz_subdomain_wordlist -t 50 -o $domain_dir/fuzz-subdomain -d ${@}
 }
 
 # Description: vhost fuzzing using gobuster, compatible with original arguments
-# Usage: recon_vhost <IP> <DOMAIN_NAME> [OPTIONS]
+# Usage: fuzz_vhost <IP> <DOMAIN_NAME> [OPTIONS]
 # Arguments:
 #   - IP: IP address
 #   - DOMAIN_NAME: Domain name. e.g., example.com
 #   - OPTIONS: options from gobuster.
 # Configuration:
-#   - functions.recon_vhost.wordlist: default wordlist
-# Example: recon_vhost 192.168.1.1 example.com
-function recon_vhost() {
+#   - functions.fuzz_vhost.wordlist: default wordlist
+# Example: fuzz_vhost 192.168.1.1 example.com
+function fuzz_vhost() {
     [ $# -eq 0 ] && _help && return 0
     local arg_ip="$1"
-    local domain="$2"
-    local domain_dir=$(_create_web_fuzz_report_directory "$domain")
-    _display_wordlist_statistic $_swiss_recon_vhost_wordlist
-    _wrap gobuster vhost -k -u $arg_ip --domain $domain --append-domain -r -w $_swiss_recon_vhost_wordlist -o $domain_dir/vhost-recon -t 100
+    local arg_domain="$2"
+    local domain_dir=$(_create_web_fuzz_report_directory "$arg_domain")
+    _display_wordlist_statistic $_swiss_fuzz_vhost_wordlist
+    _wrap gobuster vhost -k -u $arg_ip --domain $arg_domain --append-domain -r -w $_swiss_fuzz_vhost_wordlist -o $domain_dir/fuzz-vhost -t 100
 }
 
 # Description: get all urls from a web page
@@ -198,3 +189,4 @@ function _display_wordlist_statistic() {
         _logger -l warn  --no-mark "================================"
     fi
 }
+

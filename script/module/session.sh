@@ -10,7 +10,7 @@ function session() {
 
     case $arg_option in
         switch)
-            [[ -z $(ls $swiss_session) ]] && _logger -l info "No Session found." && exit 0
+            [[ -z $(ls $swiss_session) ]] && _logger -l info "No Session found." && return 0
             local arg_selected_session=$(ls $swiss_session | sed 's/\.[^.]*$//' | gum choose)
             _load_session "$swiss_session/$arg_selected_session.json"
         ;;
@@ -29,6 +29,7 @@ function session() {
                 if [[ "$arg_setup_workspace" -eq 1 ]]; then
                     [[ -f "$_swiss_session_default_username_wordlist" ]] && cp $_swiss_session_default_username_wordlist username.txt || touch username.txt
                     [[ -f "$_swiss_session_default_password_wordlist" ]] && cp $_swiss_session_default_password_wordlist password.txt || touch password.txt
+                    touch valid-credentials.txt
                     mkdir reports
                 fi
                 workspace_snippet=", \"workspace\": \"$(pwd)"\"
@@ -112,6 +113,19 @@ function _sticky_session() {
     if [[ "$_swiss_session_sticky_session" == true ]]; then
         local used_session=$(jq -r '.variable.used_session // empty' "$swiss_settings")
         [[ ! -z "$used_session" ]] && _load_session
+    fi
+}
+
+function _get_session_argument() {
+    local arg_name=$1
+    local used_session=$(jq -r '.variable.used_session // empty' "$swiss_settings")
+    local arg_value=$(jq -r ".$arg_name" "$used_session")
+    [[ ! -z $arg_value ]] && echo $arg_value || echo ""
+}
+
+function _get_default_argument() {
+    if [[ $_swiss_session_arguments_as_default == true ]]; then
+        _get_session_argument $1
     fi
 }
 
